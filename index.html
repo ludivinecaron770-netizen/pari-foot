@@ -146,7 +146,13 @@
     letter-spacing: 0.02em;
     margin: 0 0 14px;
     color: var(--chalk-dim);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
+  h2.section-title.static { cursor: default; }
+  .collapsible { display: none; }
   .board-row {
     display: flex;
     align-items: center;
@@ -179,6 +185,16 @@
     width: 40px;
     text-align: right;
   }
+  .history-row {
+    padding: 8px 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  .history-row:last-child { border-bottom: none; }
+  .history-row .h-date { color: var(--chalk-dim); font-size: 0.78rem; }
+  .history-row .h-score { font-family: 'Oswald', sans-serif; color: var(--gold); }
   .empty-note { color: var(--chalk-dim); font-size: 0.9rem; text-align: center; padding: 12px 0; }
   .loading-note { color: var(--chalk-dim); font-size: 0.9rem; text-align: center; padding: 20px 0; }
 </style>
@@ -202,7 +218,7 @@
   <div id="dashboard-section" class="section">
 
     <div class="card match-card">
-      <div id="match-loading" class="loading-note">Chargement du prochain match...</div>
+      <div id="match-loading" class="loading-note">Chargement du match...</div>
       <div id="match-content" style="display:none;">
         <div class="match-date" id="match-date"></div>
         <div class="match-teams" id="match-teams"></div>
@@ -225,9 +241,27 @@
     </div>
 
     <div class="card">
-      <h2 class="section-title">Classement des pronostics</h2>
-      <div id="leaderboard"></div>
-      <p class="empty-note" id="leaderboard-empty" style="display:none;">Personne n'a encore parié. Sois le·la premier·ère !</p>
+      <h2 class="section-title static">🏆 Classement général</h2>
+      <div id="general-leaderboard"></div>
+      <p class="empty-note" id="general-leaderboard-empty" style="display:none;">Personne n'a encore de points. Ça va venir !</p>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title" onclick="toggleCurrentBets()">
+        <span>Pronostics pour ce match</span>
+        <span id="current-bets-icon">▾</span>
+      </h2>
+      <div id="leaderboard" class="collapsible"></div>
+      <p class="empty-note collapsible" id="leaderboard-empty" style="display:none;">Personne n'a encore parié sur ce match.</p>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title" onclick="toggleHistory()">
+        <span>Historique des résultats</span>
+        <span id="history-icon">▾</span>
+      </h2>
+      <div id="match-history" class="collapsible"></div>
+      <p class="empty-note collapsible" id="history-empty" style="display:none;">Aucun match résolu pour l'instant.</p>
     </div>
 
     <span class="footer-link" onclick="changePseudo()">Changer de pseudo</span>
@@ -237,11 +271,11 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import {
-  getFirestore, doc, setDoc, getDoc, serverTimestamp,
+  getFirestore, doc, setDoc, getDoc, serverTimestamp, increment,
   collection, query, orderBy, limit, onSnapshot, getDocs, where
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// ⚠️ Remplacez par votre configuration Firebase (nouveau projet)
+// ⚠️ Remplacez par votre configuration Firebase
 const firebaseConfig = {
 
   apiKey: "AIzaSyBcorrKKozkQd04aiR4y7sKT7RFfpD4SDE",
@@ -260,16 +294,18 @@ const firebaseConfig = {
 
 };
 
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ⚠️ Remplacez par l'URL de votre nouveau Worker Cloudflare
+// ⚠️ Remplacez par l'URL de votre Worker Cloudflare (sans / à la fin)
 const PROXY_URL = "https://flat-boat-e8ea.ludivinecaron770.workers.dev";
 
 let currentPseudo = "";
-let currentMatch = null; // { id, homeTeam, awayTeam, utcDate, status, homeScore, awayScore }
+let currentMatch = null;
 let unsubscribeLeaderboard = null;
+let unsubscribeActiveMatch = null;
+let generalLeaderboardStarted = false;
+let historyStarted = false;
 
 function show(sectionId) {
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
@@ -290,7 +326,6 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// Barème de points
 function computeGain(betHome, betAway, actualHome, actualAway) {
   if (betHome === actualHome && betAway === actualAway) return 5;
   const betDiff = betHome - betAway;
@@ -299,6 +334,24 @@ function computeGain(betHome, betAway, actualHome, actualAway) {
   const outcome = d => (d > 0 ? 1 : d < 0 ? -1 : 0);
   if (outcome(betDiff) === outcome(actualDiff)) return 1;
   return 0;
+}
+
+window.toggleCurrentBets = function () {
+  toggleCollapsible("leaderboard", "leaderboard-empty", "current-bets-icon");
+};
+window.toggleHistory = function () {
+  toggleCollapsible("match-history", "history-empty", "history-icon");
+};
+function toggleCollapsible(contentId, emptyId, iconId) {
+  const content = document.getElementById(contentId);
+  const empty = document.getElementById(emptyId);
+  const icon = document.getElementById(iconId);
+  const isHidden = content.style.display === "none" || content.style.display === "";
+  content.style.display = isHidden ? "block" : "none";
+  if (empty.dataset.shouldShow === "true") {
+    empty.style.display = isHidden ? "block" : "none";
+  }
+  icon.textContent = isHidden ? "▴" : "▾";
 }
 
 window.setPseudo = function () {
@@ -317,21 +370,34 @@ window.setPseudo = function () {
   document.getElementById("user-pseudo").textContent = pseudo;
 
   show("dashboard-section");
-  loadNextMatch();
+  subscribeActiveMatch();
+  if (!generalLeaderboardStarted) { startGeneralLeaderboard(); generalLeaderboardStarted = true; }
+  if (!historyStarted) { startHistory(); historyStarted = true; }
 };
 
 window.changePseudo = function () {
   if (unsubscribeLeaderboard) { unsubscribeLeaderboard(); unsubscribeLeaderboard = null; }
+  if (unsubscribeActiveMatch) { unsubscribeActiveMatch(); unsubscribeActiveMatch = null; }
   document.getElementById("pseudo").value = currentPseudo;
   show("pseudo-section");
 };
 
-async function loadNextMatch() {
+function subscribeActiveMatch() {
+  if (unsubscribeActiveMatch) return;
+
+  unsubscribeActiveMatch = onSnapshot(doc(db, "config", "activeMatch"), async (snap) => {
+    if (snap.exists() && snap.data().matchId) {
+      await loadMatchDetails(snap.data().matchId);
+    } else {
+      await pickAndSetNextMatch();
+    }
+  });
+}
+
+async function pickAndSetNextMatch() {
   const loadingEl = document.getElementById("match-loading");
-  const contentEl = document.getElementById("match-content");
   const errorEl = document.getElementById("match-error");
   loadingEl.style.display = "block";
-  contentEl.style.display = "none";
   errorEl.style.display = "none";
 
   try {
@@ -346,19 +412,51 @@ async function loadNextMatch() {
     const sorted = [...data.matches].sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
     const next = sorted[0];
 
+    await setDoc(doc(db, "config", "activeMatch"), {
+      matchId: next.id,
+      updatedAt: serverTimestamp()
+    });
+    // Le onSnapshot ci-dessus va se redéclencher avec ce nouveau matchId.
+
+  } catch (error) {
+    loadingEl.style.display = "none";
+    errorEl.textContent = `Erreur : ${error.message}`;
+    errorEl.style.display = "block";
+  }
+}
+
+async function loadMatchDetails(matchId) {
+  const loadingEl = document.getElementById("match-loading");
+  const contentEl = document.getElementById("match-content");
+  const errorEl = document.getElementById("match-error");
+  loadingEl.style.display = "block";
+  contentEl.style.display = "none";
+  errorEl.style.display = "none";
+
+  try {
+    const response = await fetch(`${PROXY_URL}/match?id=${matchId}`);
+    if (!response.ok) throw new Error(`Erreur API (${response.status})`);
+    const data = await response.json();
+    const match = data.match || data;
+
     currentMatch = {
-      id: next.id,
-      homeTeam: next.homeTeam.shortName || next.homeTeam.name,
-      awayTeam: next.awayTeam.shortName || next.awayTeam.name,
-      utcDate: next.utcDate,
-      status: next.status,
-      homeScore: null,
-      awayScore: null
+      id: match.id,
+      homeTeam: match.homeTeam.shortName || match.homeTeam.name,
+      awayTeam: match.awayTeam.shortName || match.awayTeam.name,
+      utcDate: match.utcDate,
+      status: match.status,
+      homeScore: match.score && match.score.fullTime ? (match.score.fullTime.home ?? null) : null,
+      awayScore: match.score && match.score.fullTime ? (match.score.fullTime.away ?? null) : null
     };
 
     renderMatch();
-    await checkMatchResolution();
     startLeaderboard();
+
+    if (currentMatch.status === "FINISHED" && currentMatch.homeScore !== null) {
+      await resolveAllBets();
+      await pickAndSetNextMatch(); // avance automatiquement, sans bouton
+      return;
+    }
 
     loadingEl.style.display = "none";
     contentEl.style.display = "block";
@@ -378,19 +476,22 @@ function renderMatch() {
   document.getElementById("match-teams").textContent = `${currentMatch.homeTeam} — ${currentMatch.awayTeam}`;
 
   const tag = document.getElementById("match-status-tag");
+  tag.classList.remove("finished");
   const kickoffPassed = new Date() >= new Date(currentMatch.utcDate);
 
   if (currentMatch.status === "FINISHED") {
-    tag.textContent = "Match terminé";
+    tag.textContent = "Match terminé, calcul des points...";
     tag.classList.add("finished");
     document.getElementById("match-live-score").style.display = "block";
     document.getElementById("match-live-score").textContent = `${currentMatch.homeScore} - ${currentMatch.awayScore}`;
     document.getElementById("bet-card").style.display = "none";
   } else if (kickoffPassed) {
+    document.getElementById("match-live-score").style.display = "none";
     tag.textContent = "Paris clôturés, en attente du résultat";
     document.getElementById("bet-card").style.display = "block";
     showBetForm(false);
   } else {
+    document.getElementById("match-live-score").style.display = "none";
     tag.textContent = "Pronostics ouverts";
     document.getElementById("bet-card").style.display = "block";
     showBetForm(true);
@@ -412,6 +513,8 @@ async function showBetForm(editable) {
     recap.style.display = "block";
     recap.innerHTML = `Ton pronostic actuel : <strong>${d.butHome} - ${d.butAway}</strong>`;
   } else {
+    homeInput.value = "";
+    awayInput.value = "";
     recap.style.display = "none";
   }
 
@@ -455,6 +558,7 @@ window.submitBet = async function () {
       butHome,
       butAway,
       gain: 0,
+      resolved: false,
       updatedAt: serverTimestamp()
     }, { merge: true });
 
@@ -467,42 +571,43 @@ window.submitBet = async function () {
   }
 };
 
-async function checkMatchResolution() {
-  try {
-    const response = await fetch(`${PROXY_URL}/match?id=${currentMatch.id}`);
-    if (!response.ok) return;
-    const data = await response.json();
-    const match = data.match || data;
-
-    if (match.status === "FINISHED" && match.score && match.score.fullTime) {
-      currentMatch.status = "FINISHED";
-      currentMatch.homeScore = match.score.fullTime.home || 0;
-      currentMatch.awayScore = match.score.fullTime.away || 0;
-      renderMatch();
-      await resolveAllBets();
-    }
-  } catch (error) {
-    console.error("Erreur vérification résultat:", error);
-  }
-}
-
+// Calcule les points, met à jour le total cumulé de chacun, et archive
+// le résultat du match dans l'historique — une seule fois par match.
 async function resolveAllBets() {
   const q = query(collection(db, "scores"), where("matchId", "==", currentMatch.id));
   const snapshot = await getDocs(q);
 
   for (const docSnap of snapshot.docs) {
     const d = docSnap.data();
+    if (d.resolved) continue;
+
     const gain = computeGain(d.butHome, d.butAway, currentMatch.homeScore, currentMatch.awayScore);
-    if (d.gain !== gain) {
-      await setDoc(doc(db, "scores", docSnap.id), { gain }, { merge: true });
-    }
+    await setDoc(doc(db, "scores", docSnap.id), { gain, resolved: true }, { merge: true });
+
+    await setDoc(doc(db, "players", pseudoDocId(d.pseudo)), {
+      pseudo: d.pseudo,
+      totalGain: increment(gain)
+    }, { merge: true });
+  }
+
+  const histRef = doc(db, "matchHistory", String(currentMatch.id));
+  const histSnap = await getDoc(histRef);
+  if (!histSnap.exists()) {
+    await setDoc(histRef, {
+      homeTeam: currentMatch.homeTeam,
+      awayTeam: currentMatch.awayTeam,
+      homeScore: currentMatch.homeScore,
+      awayScore: currentMatch.awayScore,
+      utcDate: currentMatch.utcDate,
+      resolvedAt: serverTimestamp()
+    });
   }
 }
 
 function startLeaderboard() {
   if (unsubscribeLeaderboard) unsubscribeLeaderboard();
 
-  const q = query(collection(db, "scores"), orderBy("gain", "desc"), limit(100));
+  const q = query(collection(db, "scores"), orderBy("gain", "desc"), limit(200));
   unsubscribeLeaderboard = onSnapshot(q, (snapshot) => {
     const board = document.getElementById("leaderboard");
     const emptyNote = document.getElementById("leaderboard-empty");
@@ -510,12 +615,16 @@ function startLeaderboard() {
 
     const rows = snapshot.docs
       .map(d => d.data())
-      .filter(d => d.matchId === currentMatch.id);
+      .filter(d => currentMatch && d.matchId === currentMatch.id);
+
+    const showList = document.getElementById("leaderboard").style.display !== "none";
 
     if (rows.length === 0) {
-      emptyNote.style.display = "block";
+      emptyNote.dataset.shouldShow = "true";
+      if (showList) emptyNote.style.display = "block";
       return;
     }
+    emptyNote.dataset.shouldShow = "false";
     emptyNote.style.display = "none";
 
     let rank = 0;
@@ -536,6 +645,71 @@ function startLeaderboard() {
         <span class="points">${resolved ? d.gain : "?"}</span>
       `;
       board.appendChild(row);
+    });
+  });
+}
+
+function startGeneralLeaderboard() {
+  const q = query(collection(db, "players"), orderBy("totalGain", "desc"), limit(100));
+  onSnapshot(q, (snapshot) => {
+    const board = document.getElementById("general-leaderboard");
+    const emptyNote = document.getElementById("general-leaderboard-empty");
+    board.innerHTML = "";
+
+    if (snapshot.empty) {
+      emptyNote.style.display = "block";
+      return;
+    }
+    emptyNote.style.display = "none";
+
+    let rank = 0;
+    snapshot.forEach((docSnap) => {
+      rank++;
+      const d = docSnap.data();
+      const isYou = d.pseudo === currentPseudo;
+
+      const row = document.createElement("div");
+      row.className = "board-row";
+      row.innerHTML = `
+        <span class="rank">#${rank}</span>
+        <span class="name">
+          ${escapeHtml(d.pseudo || "?")}
+          ${isYou ? '<span class="you-tag">TOI</span>' : ""}
+        </span>
+        <span class="points">${d.totalGain || 0}</span>
+      `;
+      board.appendChild(row);
+    });
+  });
+}
+
+function startHistory() {
+  const q = query(collection(db, "matchHistory"), orderBy("utcDate", "desc"), limit(30));
+  onSnapshot(q, (snapshot) => {
+    const list = document.getElementById("match-history");
+    const emptyNote = document.getElementById("history-empty");
+    list.innerHTML = "";
+
+    const showList = list.style.display !== "none";
+
+    if (snapshot.empty) {
+      emptyNote.dataset.shouldShow = "true";
+      if (showList) emptyNote.style.display = "block";
+      return;
+    }
+    emptyNote.dataset.shouldShow = "false";
+    emptyNote.style.display = "none";
+
+    snapshot.forEach((docSnap) => {
+      const d = docSnap.data();
+      const dateStr = new Date(d.utcDate).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+      const row = document.createElement("div");
+      row.className = "history-row";
+      row.innerHTML = `
+        <span>${escapeHtml(d.homeTeam)} — ${escapeHtml(d.awayTeam)} <span class="h-date">(${dateStr})</span></span>
+        <span class="h-score">${d.homeScore}-${d.awayScore}</span>
+      `;
+      list.appendChild(row);
     });
   });
 }
