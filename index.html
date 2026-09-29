@@ -239,7 +239,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import {
   getFirestore, doc, setDoc, getDoc, serverTimestamp, increment,
-  collection, query, orderBy, limit, onSnapshot, getDocs, where, runTransaction
+  collection, query, orderBy, limit, onSnapshot, getDocs, where, runTransaction, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -333,6 +333,25 @@ window.changePseudo = function () {
 };
 
 // ---------- Journée en cours ----------
+// Crée matches/{id} (heure du coup d'envoi en Timestamp) s'il n'existe pas encore.
+// Ce document sert aux règles Firestore pour refuser les paris après le coup d'envoi.
+const ensuredMatchDocs = new Set();
+async function ensureMatchDocs(list) {
+  for (const m of list) {
+    if (ensuredMatchDocs.has(m.id)) continue;
+    const ref = doc(db, "matches", String(m.id));
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, {
+        homeTeam: m.homeTeam,
+        awayTeam: m.awayTeam,
+        kickoff: Timestamp.fromDate(new Date(m.utcDate))
+      });
+    }
+    ensuredMatchDocs.add(m.id);
+  }
+}
+
 function subscribeActiveMatches() {
   if (unsubActive) return;
   unsubActive = onSnapshot(doc(db, "config", "activeMatches"), async (snap) => {
@@ -343,6 +362,7 @@ function subscribeActiveMatches() {
       matches = data.matches
         .map(m => ({ status: "TIMED", homeScore: null, awayScore: null, archived: false, ...previous[m.id], ...m }))
         .sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
+      await ensureMatchDocs(matches);
       startAllBets();
       renderMatches();
       await refreshMatches();
@@ -370,14 +390,18 @@ async function pickNextMatchday() {
     const md = upcoming[0].matchday;
     const group = md != null ? upcoming.filter(m => m.matchday === md) : [upcoming[0]];
 
+    const list = group.map(m => ({
+      id: m.id,
+      homeTeam: m.homeTeam.shortName || m.homeTeam.name,
+      awayTeam: m.awayTeam.shortName || m.awayTeam.name,
+      utcDate: m.utcDate
+    }));
+
+    await ensureMatchDocs(list); // heures de coup d'envoi lisibles par les règles Firestore
+
     await setDoc(doc(db, "config", "activeMatches"), {
       matchday: md ?? null,
-      matches: group.map(m => ({
-        id: m.id,
-        homeTeam: m.homeTeam.shortName || m.homeTeam.name,
-        awayTeam: m.awayTeam.shortName || m.awayTeam.name,
-        utcDate: m.utcDate
-      })),
+      matches: list,
       updatedAt: serverTimestamp()
     });
     // onSnapshot se redéclenche avec la nouvelle journée.
