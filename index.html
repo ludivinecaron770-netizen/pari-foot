@@ -67,6 +67,7 @@
   input[type="text"] { width: 100%; }
   input::placeholder { color: rgba(244,247,242,0.4); }
   input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+  input:disabled { opacity: 0.6; }
   button {
     width: 100%;
     margin-top: 14px;
@@ -94,24 +95,30 @@
     text-decoration: underline;
     cursor: pointer;
   }
-  .error-msg {
-    color: var(--error);
-    font-size: 0.88rem;
-    margin-top: 10px;
-    display: none;
+  .error-msg { color: var(--error); font-size: 0.88rem; margin-top: 10px; display: none; }
+  .inline-error { color: var(--error); font-size: 0.85rem; margin-top: 8px; }
+
+  .matchday-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.1rem;
+    text-align: center;
+    color: var(--chalk-dim);
+    margin: 0 0 14px;
+    letter-spacing: 0.03em;
   }
-  .match-card { text-align: center; }
-  .match-date { color: var(--chalk-dim); font-size: 0.85rem; margin-bottom: 10px; }
+  .match-card { text-align: center; padding: 18px; }
+  .match-card.locked { border-color: rgba(255,255,255,0.07); }
+  .match-date { color: var(--chalk-dim); font-size: 0.85rem; margin-bottom: 8px; text-transform: capitalize; }
   .match-teams {
     font-family: 'Oswald', sans-serif;
-    font-size: clamp(1.1rem, 5vw, 1.4rem);
+    font-size: clamp(1.05rem, 4.6vw, 1.3rem);
     font-weight: 700;
   }
   .match-score-live {
     font-family: 'Oswald', sans-serif;
-    font-size: clamp(2rem, 10vw, 2.6rem);
+    font-size: clamp(1.8rem, 9vw, 2.3rem);
     color: var(--gold);
-    margin-top: 8px;
+    margin-top: 6px;
   }
   .status-tag {
     display: inline-block;
@@ -122,23 +129,37 @@
     border: 1px solid var(--card-border);
     color: var(--chalk-dim);
   }
+  .status-tag.open { border-color: var(--gold); color: var(--gold); }
   .status-tag.finished { border-color: var(--green-ok); color: var(--green-ok); }
-  .bet-inputs {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    margin-top: 10px;
-  }
+  .bet-inputs { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 12px; }
   .bet-inputs input { width: 64px; text-align: center; font-size: 1.3rem; font-family: 'Oswald', sans-serif; }
   .bet-inputs .vs { color: var(--chalk-dim); font-family: 'Oswald', sans-serif; }
-  .my-bet-recap {
-    text-align: center;
-    color: var(--chalk-dim);
-    font-size: 0.9rem;
-    margin-top: 8px;
-  }
+  .my-bet-recap { color: var(--chalk-dim); font-size: 0.9rem; margin: 12px 0 0; }
   .my-bet-recap strong { color: var(--chalk); }
+  .pts-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    background: var(--gold);
+    color: #1a1200;
+  }
+  .pts-badge.zero { background: rgba(255,255,255,0.14); color: var(--chalk-dim); }
+
+  details { margin-top: 12px; text-align: left; }
+  summary {
+    cursor: pointer;
+    color: var(--chalk-dim);
+    font-size: 0.85rem;
+    text-align: center;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: " ▾"; }
+  details[open] summary::after { content: " ▴"; }
+
   h2.section-title {
     font-family: 'Oswald', sans-serif;
     font-size: 1.05rem;
@@ -146,55 +167,29 @@
     letter-spacing: 0.02em;
     margin: 0 0 14px;
     color: var(--chalk-dim);
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
   }
-  h2.section-title.static { cursor: default; }
-  .collapsible { display: none; }
   .board-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 4px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    gap: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 4px; border-bottom: 1px solid rgba(255,255,255,0.08); gap: 8px;
   }
   .board-row:last-child { border-bottom: none; }
-  .board-row .rank {
-    font-family: 'Oswald', sans-serif;
-    color: var(--chalk-dim);
-    width: 22px;
-    flex-shrink: 0;
-  }
+  .board-row .rank { font-family: 'Oswald', sans-serif; color: var(--chalk-dim); width: 22px; flex-shrink: 0; }
   .board-row .name { flex: 1; overflow-wrap: anywhere; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
   .board-row .you-tag {
-    font-size: 0.72rem;
-    color: var(--gold);
-    border: 1px solid var(--gold);
-    border-radius: 4px;
-    padding: 1px 5px;
+    font-size: 0.72rem; color: var(--gold); border: 1px solid var(--gold);
+    border-radius: 4px; padding: 1px 5px;
   }
   .board-row .bet-value { color: var(--chalk-dim); font-size: 0.85rem; flex-shrink: 0; }
   .board-row .points {
-    font-family: 'Oswald', sans-serif;
-    font-weight: 700;
-    color: var(--gold);
-    flex-shrink: 0;
-    width: 40px;
-    text-align: right;
+    font-family: 'Oswald', sans-serif; font-weight: 700; color: var(--gold);
+    flex-shrink: 0; width: 40px; text-align: right;
   }
-  .history-row {
-    padding: 8px 4px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    font-size: 0.9rem;
-    display: flex;
-    justify-content: space-between;
-  }
+  .history-row { padding: 10px 4px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.9rem; }
   .history-row:last-child { border-bottom: none; }
+  .history-top { display: flex; justify-content: space-between; gap: 8px; }
   .history-row .h-date { color: var(--chalk-dim); font-size: 0.78rem; }
-  .history-row .h-score { font-family: 'Oswald', sans-serif; color: var(--gold); }
+  .history-row .h-score { font-family: 'Oswald', sans-serif; color: var(--gold); flex-shrink: 0; }
+  .history-mine { color: var(--chalk-dim); font-size: 0.82rem; margin-top: 4px; }
   .empty-note { color: var(--chalk-dim); font-size: 0.9rem; text-align: center; padding: 12px 0; }
   .loading-note { color: var(--chalk-dim); font-size: 0.9rem; text-align: center; padding: 20px 0; }
 </style>
@@ -217,51 +212,23 @@
   <!-- Dashboard -->
   <div id="dashboard-section" class="section">
 
-    <div class="card match-card">
-      <div id="match-loading" class="loading-note">Chargement du match...</div>
-      <div id="match-content" style="display:none;">
-        <div class="match-date" id="match-date"></div>
-        <div class="match-teams" id="match-teams"></div>
-        <div id="match-live-score" style="display:none;" class="match-score-live"></div>
-        <div class="status-tag" id="match-status-tag"></div>
-      </div>
-      <p class="error-msg" id="match-error"></p>
-    </div>
+    <p class="lead" style="text-align:center;margin-bottom:10px;">Salut <strong id="user-pseudo"></strong> 👋</p>
 
-    <div class="card" id="bet-card" style="display:none;">
-      <p class="lead" id="bet-lead">Salut <strong id="user-pseudo"></strong> 👋 Fais ton pronostic :</p>
-      <div class="bet-inputs">
-        <input type="number" id="bet-home" min="0" max="20" placeholder="0">
-        <span class="vs">—</span>
-        <input type="number" id="bet-away" min="0" max="20" placeholder="0">
-      </div>
-      <button onclick="submitBet()" id="bet-btn">Valider mon pronostic</button>
-      <p class="my-bet-recap" id="my-bet-recap" style="display:none;"></p>
-      <p class="error-msg" id="bet-error"></p>
-    </div>
+    <div id="matchday-title" class="matchday-title"></div>
+    <div id="matches-loading" class="loading-note">Chargement des matchs...</div>
+    <p class="error-msg" id="matches-error"></p>
+    <div id="matches-list"></div>
 
     <div class="card">
-      <h2 class="section-title static">🏆 Classement général</h2>
+      <h2 class="section-title">🏆 Classement général</h2>
       <div id="general-leaderboard"></div>
       <p class="empty-note" id="general-leaderboard-empty" style="display:none;">Personne n'a encore de points. Ça va venir !</p>
     </div>
 
     <div class="card">
-      <h2 class="section-title" onclick="toggleCurrentBets()">
-        <span>Pronostics pour ce match</span>
-        <span id="current-bets-icon">▾</span>
-      </h2>
-      <div id="leaderboard" class="collapsible"></div>
-      <p class="empty-note collapsible" id="leaderboard-empty" style="display:none;">Personne n'a encore parié sur ce match.</p>
-    </div>
-
-    <div class="card">
-      <h2 class="section-title" onclick="toggleHistory()">
-        <span>Historique des résultats</span>
-        <span id="history-icon">▾</span>
-      </h2>
-      <div id="match-history" class="collapsible"></div>
-      <p class="empty-note collapsible" id="history-empty" style="display:none;">Aucun match résolu pour l'instant.</p>
+      <h2 class="section-title">📜 Historique & mes points</h2>
+      <div id="match-history"></div>
+      <p class="empty-note" id="history-empty" style="display:none;">Aucun match résolu pour l'instant.</p>
     </div>
 
     <span class="footer-link" onclick="changePseudo()">Changer de pseudo</span>
@@ -272,97 +239,73 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import {
   getFirestore, doc, setDoc, getDoc, serverTimestamp, increment,
-  collection, query, orderBy, limit, onSnapshot, getDocs, where
+  collection, query, orderBy, limit, onSnapshot, getDocs, where, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// ⚠️ Remplacez par votre configuration Firebase
 const firebaseConfig = {
-
   apiKey: "AIzaSyBcorrKKozkQd04aiR4y7sKT7RFfpD4SDE",
-
   authDomain: "pari-foot.firebaseapp.com",
-
   projectId: "pari-foot",
-
   storageBucket: "pari-foot.firebasestorage.app",
-
   messagingSenderId: "279576898714",
-
   appId: "1:279576898714:web:5807965d34ed2c6188c323",
-
   measurementId: "G-W6F8QBPM39"
-
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ⚠️ Remplacez par l'URL de votre Worker Cloudflare (sans / à la fin)
 const PROXY_URL = "https://flat-boat-e8ea.ludivinecaron770.workers.dev";
 
+const REFRESH_API_MS = 3 * 60 * 1000;   // interroge l'API des matchs commencés
+const RENDER_TICK_MS = 20 * 1000;       // re-vérifie les verrouillages (coup d'envoi)
+
+// ---------- État ----------
 let currentPseudo = "";
-let currentMatch = null;
-let unsubscribeLeaderboard = null;
-let unsubscribeActiveMatch = null;
-let generalLeaderboardStarted = false;
-let historyStarted = false;
+let matchday = null;
+let matches = [];          // [{id, homeTeam, awayTeam, utcDate, status, homeScore, awayScore, archived}]
+let myBets = {};           // matchId -> doc de scores (mes pronostics)
+let allBets = {};          // matchId -> [docs de scores] (tous les joueurs)
+let historyDocs = [];      // docs matchHistory
+let drafts = {};           // matchId -> {h, a} (saisie en cours)
+let openDetails = new Set();
 
-function show(sectionId) {
+let unsubActive = null, unsubMyBets = null, unsubAllBets = null;
+let generalStarted = false, historyStarted = false;
+let refreshing = false, pendingRefresh = false;
+let refreshTimer = null, renderTimer = null;
+
+// ---------- Utilitaires ----------
+function show(id) {
   document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-  document.getElementById(sectionId).classList.add("active");
+  document.getElementById(id).classList.add("active");
 }
-
-function pseudoDocId(pseudo) {
-  return pseudo.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-").slice(0, 40) || "joueur";
+function pseudoDocId(p) {
+  return p.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-").slice(0, 40) || "joueur";
 }
-
-function betDocId(matchId, pseudo) {
-  return `${matchId}_${pseudoDocId(pseudo)}`;
-}
-
+function betDocId(matchId, pseudo) { return `${matchId}_${pseudoDocId(pseudo)}`; }
 function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
+  const d = document.createElement("div");
+  d.textContent = str ?? "";
+  return d.innerHTML;
 }
-
-function computeGain(betHome, betAway, actualHome, actualAway) {
-  if (betHome === actualHome && betAway === actualAway) return 5;
-  const betDiff = betHome - betAway;
-  const actualDiff = actualHome - actualAway;
-  if (betDiff === actualDiff) return 3;
-  const outcome = d => (d > 0 ? 1 : d < 0 ? -1 : 0);
-  if (outcome(betDiff) === outcome(actualDiff)) return 1;
-  return 0;
+function computeGain(bh, ba, ah, aa) {
+  if (bh === ah && ba === aa) return 5;
+  const bd = bh - ba, ad = ah - aa;
+  if (bd === ad) return 3;
+  const out = d => (d > 0 ? 1 : d < 0 ? -1 : 0);
+  return out(bd) === out(ad) ? 1 : 0;
 }
+const isKickedOff = m => new Date() >= new Date(m.utcDate);
+const isCancelled = m => m.status === "POSTPONED" || m.status === "CANCELLED";
+const isFinished = m => m.status === "FINISHED" && m.homeScore !== null && m.homeScore !== undefined;
+const isDone = m => (isFinished(m) && m.archived) || isCancelled(m);
 
-window.toggleCurrentBets = function () {
-  toggleCollapsible("leaderboard", "leaderboard-empty", "current-bets-icon");
-};
-window.toggleHistory = function () {
-  toggleCollapsible("match-history", "history-empty", "history-icon");
-};
-function toggleCollapsible(contentId, emptyId, iconId) {
-  const content = document.getElementById(contentId);
-  const empty = document.getElementById(emptyId);
-  const icon = document.getElementById(iconId);
-  const isHidden = content.style.display === "none" || content.style.display === "";
-  content.style.display = isHidden ? "block" : "none";
-  if (empty.dataset.shouldShow === "true") {
-    empty.style.display = isHidden ? "block" : "none";
-  }
-  icon.textContent = isHidden ? "▴" : "▾";
-}
-
+// ---------- Pseudo ----------
 window.setPseudo = function () {
-  const input = document.getElementById("pseudo");
-  const pseudo = input.value.trim();
+  const pseudo = document.getElementById("pseudo").value.trim();
   const errorEl = document.getElementById("pseudo-error");
-
-  if (!pseudo) {
-    errorEl.style.display = "block";
-    return;
-  }
+  if (!pseudo) { errorEl.style.display = "block"; return; }
   errorEl.style.display = "none";
 
   currentPseudo = pseudo;
@@ -370,355 +313,423 @@ window.setPseudo = function () {
   document.getElementById("user-pseudo").textContent = pseudo;
 
   show("dashboard-section");
-  subscribeActiveMatch();
-  if (!generalLeaderboardStarted) { startGeneralLeaderboard(); generalLeaderboardStarted = true; }
+  startMyBets();
+  subscribeActiveMatches();
+  if (!generalStarted) { startGeneralLeaderboard(); generalStarted = true; }
   if (!historyStarted) { startHistory(); historyStarted = true; }
+
+  clearInterval(refreshTimer); clearInterval(renderTimer);
+  refreshTimer = setInterval(refreshMatches, REFRESH_API_MS);
+  renderTimer = setInterval(renderMatches, RENDER_TICK_MS);
 };
 
 window.changePseudo = function () {
-  if (unsubscribeLeaderboard) { unsubscribeLeaderboard(); unsubscribeLeaderboard = null; }
-  if (unsubscribeActiveMatch) { unsubscribeActiveMatch(); unsubscribeActiveMatch = null; }
+  [unsubActive, unsubMyBets, unsubAllBets].forEach(u => u && u());
+  unsubActive = unsubMyBets = unsubAllBets = null;
+  clearInterval(refreshTimer); clearInterval(renderTimer);
+  myBets = {}; drafts = {};
   document.getElementById("pseudo").value = currentPseudo;
   show("pseudo-section");
 };
 
-function subscribeActiveMatch() {
-  if (unsubscribeActiveMatch) return;
-
-  unsubscribeActiveMatch = onSnapshot(doc(db, "config", "activeMatch"), async (snap) => {
-    if (snap.exists() && snap.data().matchId) {
-      await loadMatchDetails(snap.data().matchId);
+// ---------- Journée en cours ----------
+function subscribeActiveMatches() {
+  if (unsubActive) return;
+  unsubActive = onSnapshot(doc(db, "config", "activeMatches"), async (snap) => {
+    if (snap.exists() && Array.isArray(snap.data().matches) && snap.data().matches.length) {
+      const data = snap.data();
+      matchday = data.matchday ?? null;
+      const previous = Object.fromEntries(matches.map(m => [m.id, m]));
+      matches = data.matches
+        .map(m => ({ status: "TIMED", homeScore: null, awayScore: null, archived: false, ...previous[m.id], ...m }))
+        .sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
+      startAllBets();
+      renderMatches();
+      await refreshMatches();
     } else {
-      await pickAndSetNextMatch();
+      await pickNextMatchday();
     }
   });
 }
 
-async function pickAndSetNextMatch() {
-  const loadingEl = document.getElementById("match-loading");
-  const errorEl = document.getElementById("match-error");
-  loadingEl.style.display = "block";
+async function pickNextMatchday() {
+  const errorEl = document.getElementById("matches-error");
   errorEl.style.display = "none";
-
   try {
     const response = await fetch(`${PROXY_URL}/next?competition=FL1`);
     if (!response.ok) throw new Error(`Erreur API (${response.status})`);
     const data = await response.json();
 
-    if (!data.matches || data.matches.length === 0) {
-      throw new Error("Aucun match à venir trouvé.");
-    }
+    const currentIds = new Set(matches.map(m => m.id));
+    const upcoming = (data.matches || [])
+      .filter(m => m.status !== "FINISHED" && !currentIds.has(m.id))
+      .sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
 
-    const sorted = [...data.matches].sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
-    const next = sorted[0];
+    if (upcoming.length === 0) throw new Error("Aucun match à venir trouvé.");
 
-    await setDoc(doc(db, "config", "activeMatch"), {
-      matchId: next.id,
+    const md = upcoming[0].matchday;
+    const group = md != null ? upcoming.filter(m => m.matchday === md) : [upcoming[0]];
+
+    await setDoc(doc(db, "config", "activeMatches"), {
+      matchday: md ?? null,
+      matches: group.map(m => ({
+        id: m.id,
+        homeTeam: m.homeTeam.shortName || m.homeTeam.name,
+        awayTeam: m.awayTeam.shortName || m.awayTeam.name,
+        utcDate: m.utcDate
+      })),
       updatedAt: serverTimestamp()
     });
-    // Le onSnapshot ci-dessus va se redéclencher avec ce nouveau matchId.
-
+    // onSnapshot se redéclenche avec la nouvelle journée.
   } catch (error) {
-    loadingEl.style.display = "none";
+    document.getElementById("matches-loading").style.display = "none";
     errorEl.textContent = `Erreur : ${error.message}`;
     errorEl.style.display = "block";
   }
 }
 
-async function loadMatchDetails(matchId) {
-  const loadingEl = document.getElementById("match-loading");
-  const contentEl = document.getElementById("match-content");
-  const errorEl = document.getElementById("match-error");
-  loadingEl.style.display = "block";
-  contentEl.style.display = "none";
-  errorEl.style.display = "none";
-
+// ---------- Mise à jour des résultats ----------
+async function refreshMatches() {
+  if (refreshing) { pendingRefresh = true; return; }
+  refreshing = true;
   try {
-    const response = await fetch(`${PROXY_URL}/match?id=${matchId}`);
-    if (!response.ok) throw new Error(`Erreur API (${response.status})`);
-    const data = await response.json();
-    const match = data.match || data;
+    await Promise.all(matches.map(async (m) => {
+      if (isDone(m)) return;
+      if (!isKickedOff(m)) return; // pas la peine d'appeler l'API avant le coup d'envoi
 
-    currentMatch = {
-      id: match.id,
-      homeTeam: match.homeTeam.shortName || match.homeTeam.name,
-      awayTeam: match.awayTeam.shortName || match.awayTeam.name,
-      utcDate: match.utcDate,
-      status: match.status,
-      homeScore: match.score && match.score.fullTime ? (match.score.fullTime.home ?? null) : null,
-      awayScore: match.score && match.score.fullTime ? (match.score.fullTime.away ?? null) : null
-    };
+      // Déjà archivé par un autre joueur ? On évite un appel API.
+      const h = await getDoc(doc(db, "matchHistory", String(m.id)));
+      if (h.exists()) {
+        m.status = "FINISHED";
+        m.homeScore = h.data().homeScore;
+        m.awayScore = h.data().awayScore;
+        m.archived = true;
+        return;
+      }
 
-    renderMatch();
-    startLeaderboard();
+      try {
+        const r = await fetch(`${PROXY_URL}/match?id=${m.id}`);
+        if (!r.ok) throw new Error(r.status);
+        const data = await r.json();
+        const api = data.match || data;
+        m.status = api.status;
+        const ft = api.score && api.score.fullTime;
+        m.homeScore = ft ? (ft.home ?? null) : null;
+        m.awayScore = ft ? (ft.away ?? null) : null;
+      } catch (e) {
+        console.warn("Match non rafraîchi", m.id, e);
+      }
+    }));
 
-    if (currentMatch.status === "FINISHED" && currentMatch.homeScore !== null) {
-      await resolveAllBets();
-      await pickAndSetNextMatch(); // avance automatiquement, sans bouton
-      return;
+    renderMatches();
+
+    // Résolution des matchs terminés (une seule fois par match)
+    for (const m of matches) {
+      if (isFinished(m) && !m.archived) {
+        await resolveMatch(m);
+        m.archived = true;
+      }
     }
+    renderMatches();
 
-    loadingEl.style.display = "none";
-    contentEl.style.display = "block";
-
-  } catch (error) {
-    loadingEl.style.display = "none";
-    errorEl.textContent = `Erreur : ${error.message}`;
-    errorEl.style.display = "block";
+    // Toute la journée est terminée -> on passe à la suivante
+    if (matches.length && matches.every(isDone)) {
+      await pickNextMatchday();
+    }
+  } finally {
+    refreshing = false;
+    if (pendingRefresh) { pendingRefresh = false; refreshMatches(); }
   }
 }
 
-function renderMatch() {
-  const d = new Date(currentMatch.utcDate);
-  document.getElementById("match-date").textContent = d.toLocaleString("fr-FR", {
+// Attribue les points de chaque prono de ce match, sans double comptage.
+async function resolveMatch(m) {
+  const snapshot = await getDocs(query(collection(db, "scores"), where("matchId", "==", m.id)));
+
+  for (const docSnap of snapshot.docs) {
+    const ref = doc(db, "scores", docSnap.id);
+    await runTransaction(db, async (tx) => {
+      const cur = await tx.get(ref);
+      if (!cur.exists()) return;
+      const d = cur.data();
+      if (d.resolved) return; // déjà compté par un autre client
+
+      const gain = computeGain(d.butHome, d.butAway, m.homeScore, m.awayScore);
+      tx.update(ref, { gain, resolved: true });
+      tx.set(doc(db, "players", pseudoDocId(d.pseudo)), {
+        pseudo: d.pseudo,
+        totalGain: increment(gain)
+      }, { merge: true });
+    });
+  }
+
+  await setDoc(doc(db, "matchHistory", String(m.id)), {
+    matchId: m.id,
+    matchday,
+    homeTeam: m.homeTeam,
+    awayTeam: m.awayTeam,
+    homeScore: m.homeScore,
+    awayScore: m.awayScore,
+    utcDate: m.utcDate,
+    resolvedAt: serverTimestamp()
+  });
+}
+
+// ---------- Écoutes Firestore ----------
+function startMyBets() {
+  if (unsubMyBets) unsubMyBets();
+  unsubMyBets = onSnapshot(
+    query(collection(db, "scores"), where("pseudo", "==", currentPseudo)),
+    (snap) => {
+      myBets = {};
+      snap.forEach(d => { myBets[String(d.data().matchId)] = d.data(); });
+      renderMatches();
+      renderHistory();
+    }
+  );
+}
+
+function startAllBets() {
+  if (unsubAllBets) unsubAllBets();
+  const ids = matches.map(m => m.id).slice(0, 30); // limite Firestore pour "in"
+  if (!ids.length) return;
+  unsubAllBets = onSnapshot(
+    query(collection(db, "scores"), where("matchId", "in", ids)),
+    (snap) => {
+      allBets = {};
+      snap.forEach(d => {
+        const data = d.data();
+        (allBets[String(data.matchId)] ||= []).push(data);
+      });
+      renderMatches();
+    }
+  );
+}
+
+// ---------- Affichage des matchs ----------
+function renderMatches() {
+  const list = document.getElementById("matches-list");
+  if (!matches.length) return;
+
+  document.getElementById("matches-loading").style.display = "none";
+  document.getElementById("matchday-title").textContent = matchday ? `Journée ${matchday}` : "Prochains matchs";
+
+  // Conserver le focus dans un champ pendant le re-rendu
+  const a = document.activeElement;
+  const focus = a && a.dataset && a.dataset.side ? { id: a.dataset.id, side: a.dataset.side } : null;
+
+  list.innerHTML = matches.map(renderMatchCard).join("");
+
+  if (focus) {
+    const el = list.querySelector(`input[data-id="${focus.id}"][data-side="${focus.side}"]`);
+    if (el && !el.disabled) el.focus();
+  }
+}
+
+function renderMatchCard(m) {
+  const bet = myBets[String(m.id)];
+  const kicked = isKickedOff(m);
+  const finished = isFinished(m);
+  const cancelled = isCancelled(m);
+  const editable = !kicked && !cancelled;
+
+  const date = new Date(m.utcDate).toLocaleString("fr-FR", {
     weekday: "long", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
   });
-  document.getElementById("match-teams").textContent = `${currentMatch.homeTeam} — ${currentMatch.awayTeam}`;
 
-  const tag = document.getElementById("match-status-tag");
-  tag.classList.remove("finished");
-  const kickoffPassed = new Date() >= new Date(currentMatch.utcDate);
+  let tag, tagClass = "";
+  if (finished) { tag = m.archived ? "Match terminé" : "Terminé, calcul des points..."; tagClass = "finished"; }
+  else if (cancelled) tag = "Match reporté / annulé";
+  else if (kicked) tag = "🔒 Paris clôturés";
+  else { tag = "Pronostics ouverts"; tagClass = "open"; }
 
-  if (currentMatch.status === "FINISHED") {
-    tag.textContent = "Match terminé, calcul des points...";
-    tag.classList.add("finished");
-    document.getElementById("match-live-score").style.display = "block";
-    document.getElementById("match-live-score").textContent = `${currentMatch.homeScore} - ${currentMatch.awayScore}`;
-    document.getElementById("bet-card").style.display = "none";
-  } else if (kickoffPassed) {
-    document.getElementById("match-live-score").style.display = "none";
-    tag.textContent = "Paris clôturés, en attente du résultat";
-    document.getElementById("bet-card").style.display = "block";
-    showBetForm(false);
-  } else {
-    document.getElementById("match-live-score").style.display = "none";
-    tag.textContent = "Pronostics ouverts";
-    document.getElementById("bet-card").style.display = "block";
-    showBetForm(true);
-  }
-}
+  const draft = drafts[m.id];
+  const hv = draft ? draft.h : (bet ? bet.butHome : "");
+  const av = draft ? draft.a : (bet ? bet.butAway : "");
 
-async function showBetForm(editable) {
-  const btn = document.getElementById("bet-btn");
-  const recap = document.getElementById("my-bet-recap");
-  const homeInput = document.getElementById("bet-home");
-  const awayInput = document.getElementById("bet-away");
-
-  const existing = await getDoc(doc(db, "scores", betDocId(currentMatch.id, currentPseudo)));
-
-  if (existing.exists()) {
-    const d = existing.data();
-    homeInput.value = d.butHome;
-    awayInput.value = d.butAway;
-    recap.style.display = "block";
-    recap.innerHTML = `Ton pronostic actuel : <strong>${d.butHome} - ${d.butAway}</strong>`;
-  } else {
-    homeInput.value = "";
-    awayInput.value = "";
-    recap.style.display = "none";
+  let body = "";
+  if (editable) {
+    body += `
+      <div class="bet-inputs">
+        <input type="number" min="0" max="20" placeholder="0" data-id="${m.id}" data-side="h" value="${hv}">
+        <span class="vs">—</span>
+        <input type="number" min="0" max="20" placeholder="0" data-id="${m.id}" data-side="a" value="${av}">
+      </div>
+      <button data-save="${m.id}">${bet ? "Modifier mon pronostic" : "Valider mon pronostic"}</button>
+      ${bet ? `<p class="my-bet-recap">Ton pronostic actuel : <strong>${bet.butHome} - ${bet.butAway}</strong></p>` : ""}
+      <div class="inline-error" id="err-${m.id}" style="display:none;"></div>`;
+  } else if (!cancelled) {
+    if (bet) {
+      let pts = "";
+      if (finished) {
+        pts = bet.resolved
+          ? `<span class="pts-badge ${bet.gain ? "" : "zero"}">+${bet.gain} pt${bet.gain > 1 ? "s" : ""}</span>`
+          : `<span class="pts-badge zero">...</span>`;
+      }
+      body += `<p class="my-bet-recap">Ton pronostic : <strong>${bet.butHome} - ${bet.butAway}</strong>${pts}</p>`;
+    } else {
+      body += `<p class="my-bet-recap">Tu n'as pas pronostiqué ce match.</p>`;
+    }
   }
 
-  const disable = !editable;
-  homeInput.disabled = disable;
-  awayInput.disabled = disable;
-  btn.disabled = disable;
-  btn.textContent = editable ? (existing.exists() ? "Modifier mon pronostic" : "Valider mon pronostic") : "Paris clôturés";
+  // Pronostics des autres : visibles seulement après le coup d'envoi
+  let others = "";
+  if (kicked && !cancelled) {
+    const rows = [...(allBets[String(m.id)] || [])].sort((x, y) =>
+      finished ? (y.gain || 0) - (x.gain || 0) : (x.pseudo || "").localeCompare(y.pseudo || ""));
+    const open = openDetails.has(String(m.id)) ? "open" : "";
+    others = `
+      <details data-details="${m.id}" ${open}>
+        <summary>Pronostics des joueurs (${rows.length})</summary>
+        ${rows.length ? rows.map(d => `
+          <div class="board-row">
+            <span class="name">${escapeHtml(d.pseudo)}${d.pseudo === currentPseudo ? '<span class="you-tag">TOI</span>' : ""}</span>
+            <span class="bet-value">${d.butHome}-${d.butAway}</span>
+            <span class="points">${finished && d.resolved ? d.gain : "?"}</span>
+          </div>`).join("") : '<p class="empty-note">Personne n\'a parié sur ce match.</p>'}
+      </details>`;
+  }
+
+  return `
+    <div class="card match-card ${editable ? "" : "locked"}">
+      <div class="match-date">${date}</div>
+      <div class="match-teams">${escapeHtml(m.homeTeam)} — ${escapeHtml(m.awayTeam)}</div>
+      ${finished ? `<div class="match-score-live">${m.homeScore} - ${m.awayScore}</div>` : ""}
+      <div class="status-tag ${tagClass}">${tag}</div>
+      ${body}
+      ${others}
+    </div>`;
 }
 
-window.submitBet = async function () {
-  const homeInput = document.getElementById("bet-home");
-  const awayInput = document.getElementById("bet-away");
-  const errorEl = document.getElementById("bet-error");
-  const btn = document.getElementById("bet-btn");
-  errorEl.style.display = "none";
+// Événements délégués (saisie, sauvegarde, ouverture des détails)
+document.getElementById("matches-list").addEventListener("input", (e) => {
+  const t = e.target;
+  if (!t.dataset || !t.dataset.side) return;
+  const d = (drafts[t.dataset.id] ||= {});
+  d[t.dataset.side] = t.value;
+});
+document.getElementById("matches-list").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-save]");
+  if (btn) submitBet(btn.dataset.save);
+});
+document.getElementById("matches-list").addEventListener("toggle", (e) => {
+  const det = e.target;
+  if (!det.dataset || !det.dataset.details) return;
+  if (det.open) openDetails.add(det.dataset.details);
+  else openDetails.delete(det.dataset.details);
+}, true);
 
-  const butHome = parseInt(homeInput.value, 10);
-  const butAway = parseInt(awayInput.value, 10);
+async function submitBet(matchId) {
+  const m = matches.find(x => String(x.id) === String(matchId));
+  if (!m) return;
+
+  const card = document.getElementById("matches-list");
+  const hEl = card.querySelector(`input[data-id="${matchId}"][data-side="h"]`);
+  const aEl = card.querySelector(`input[data-id="${matchId}"][data-side="a"]`);
+  const btn = card.querySelector(`[data-save="${matchId}"]`);
+  const errEl = document.getElementById(`err-${matchId}`);
+  errEl.style.display = "none";
+
+  const butHome = parseInt(hEl.value, 10);
+  const butAway = parseInt(aEl.value, 10);
 
   if (isNaN(butHome) || isNaN(butAway) || butHome < 0 || butAway < 0) {
-    errorEl.textContent = "Entre un score valide pour les deux équipes.";
-    errorEl.style.display = "block";
+    errEl.textContent = "Entre un score valide pour les deux équipes.";
+    errEl.style.display = "block";
     return;
   }
-
-  if (new Date() >= new Date(currentMatch.utcDate)) {
-    errorEl.textContent = "Les paris sont clôturés pour ce match.";
-    errorEl.style.display = "block";
+  if (isKickedOff(m)) {
+    errEl.textContent = "Les paris sont clôturés pour ce match.";
+    errEl.style.display = "block";
+    renderMatches();
     return;
   }
 
   btn.disabled = true;
   btn.textContent = "Enregistrement...";
-
   try {
-    const ref = doc(db, "scores", betDocId(currentMatch.id, currentPseudo));
-    await setDoc(ref, {
+    await setDoc(doc(db, "scores", betDocId(m.id, currentPseudo)), {
       pseudo: currentPseudo,
-      matchId: currentMatch.id,
+      matchId: m.id,
       butHome,
       butAway,
       gain: 0,
       resolved: false,
       updatedAt: serverTimestamp()
     }, { merge: true });
-
-    await showBetForm(true);
+    delete drafts[m.id]; // le snapshot myBets remet à jour l'affichage
   } catch (error) {
-    errorEl.textContent = `Erreur : ${error.message}`;
-    errorEl.style.display = "block";
-  } finally {
+    errEl.textContent = `Erreur : ${error.message}`;
+    errEl.style.display = "block";
     btn.disabled = false;
-  }
-};
-
-// Calcule les points, met à jour le total cumulé de chacun, et archive
-// le résultat du match dans l'historique — une seule fois par match.
-async function resolveAllBets() {
-  const q = query(collection(db, "scores"), where("matchId", "==", currentMatch.id));
-  const snapshot = await getDocs(q);
-
-  for (const docSnap of snapshot.docs) {
-    const d = docSnap.data();
-    if (d.resolved) continue;
-
-    const gain = computeGain(d.butHome, d.butAway, currentMatch.homeScore, currentMatch.awayScore);
-    await setDoc(doc(db, "scores", docSnap.id), { gain, resolved: true }, { merge: true });
-
-    await setDoc(doc(db, "players", pseudoDocId(d.pseudo)), {
-      pseudo: d.pseudo,
-      totalGain: increment(gain)
-    }, { merge: true });
-  }
-
-  const histRef = doc(db, "matchHistory", String(currentMatch.id));
-  const histSnap = await getDoc(histRef);
-  if (!histSnap.exists()) {
-    await setDoc(histRef, {
-      homeTeam: currentMatch.homeTeam,
-      awayTeam: currentMatch.awayTeam,
-      homeScore: currentMatch.homeScore,
-      awayScore: currentMatch.awayScore,
-      utcDate: currentMatch.utcDate,
-      resolvedAt: serverTimestamp()
-    });
+    btn.textContent = "Valider mon pronostic";
   }
 }
 
-function startLeaderboard() {
-  if (unsubscribeLeaderboard) unsubscribeLeaderboard();
-
-  const q = query(collection(db, "scores"), orderBy("gain", "desc"), limit(200));
-  unsubscribeLeaderboard = onSnapshot(q, (snapshot) => {
-    const board = document.getElementById("leaderboard");
-    const emptyNote = document.getElementById("leaderboard-empty");
-    board.innerHTML = "";
-
-    const rows = snapshot.docs
-      .map(d => d.data())
-      .filter(d => currentMatch && d.matchId === currentMatch.id);
-
-    const showList = document.getElementById("leaderboard").style.display !== "none";
-
-    if (rows.length === 0) {
-      emptyNote.dataset.shouldShow = "true";
-      if (showList) emptyNote.style.display = "block";
-      return;
-    }
-    emptyNote.dataset.shouldShow = "false";
-    emptyNote.style.display = "none";
-
-    let rank = 0;
-    rows.forEach((d) => {
-      rank++;
-      const isYou = d.pseudo === currentPseudo;
-      const resolved = currentMatch.status === "FINISHED";
-
-      const row = document.createElement("div");
-      row.className = "board-row";
-      row.innerHTML = `
-        <span class="rank">#${rank}</span>
-        <span class="name">
-          ${escapeHtml(d.pseudo || "?")}
-          ${isYou ? '<span class="you-tag">TOI</span>' : ""}
-        </span>
-        <span class="bet-value">${d.butHome}-${d.butAway}</span>
-        <span class="points">${resolved ? d.gain : "?"}</span>
-      `;
-      board.appendChild(row);
-    });
-  });
-}
-
+// ---------- Classement général ----------
 function startGeneralLeaderboard() {
   const q = query(collection(db, "players"), orderBy("totalGain", "desc"), limit(100));
   onSnapshot(q, (snapshot) => {
     const board = document.getElementById("general-leaderboard");
     const emptyNote = document.getElementById("general-leaderboard-empty");
     board.innerHTML = "";
-
-    if (snapshot.empty) {
-      emptyNote.style.display = "block";
-      return;
-    }
+    if (snapshot.empty) { emptyNote.style.display = "block"; return; }
     emptyNote.style.display = "none";
 
     let rank = 0;
     snapshot.forEach((docSnap) => {
       rank++;
       const d = docSnap.data();
-      const isYou = d.pseudo === currentPseudo;
-
       const row = document.createElement("div");
       row.className = "board-row";
       row.innerHTML = `
         <span class="rank">#${rank}</span>
-        <span class="name">
-          ${escapeHtml(d.pseudo || "?")}
-          ${isYou ? '<span class="you-tag">TOI</span>' : ""}
-        </span>
-        <span class="points">${d.totalGain || 0}</span>
-      `;
+        <span class="name">${escapeHtml(d.pseudo || "?")}${d.pseudo === currentPseudo ? '<span class="you-tag">TOI</span>' : ""}</span>
+        <span class="points">${d.totalGain || 0}</span>`;
       board.appendChild(row);
     });
   });
 }
 
+// ---------- Historique (avec mes pronos et mes points) ----------
 function startHistory() {
-  const q = query(collection(db, "matchHistory"), orderBy("utcDate", "desc"), limit(30));
+  const q = query(collection(db, "matchHistory"), orderBy("utcDate", "desc"), limit(40));
   onSnapshot(q, (snapshot) => {
-    const list = document.getElementById("match-history");
-    const emptyNote = document.getElementById("history-empty");
-    list.innerHTML = "";
+    historyDocs = snapshot.docs.map(d => d.data());
+    renderHistory();
+  });
+}
 
-    const showList = list.style.display !== "none";
+function renderHistory() {
+  const list = document.getElementById("match-history");
+  const emptyNote = document.getElementById("history-empty");
+  list.innerHTML = "";
+  if (!historyDocs.length) { emptyNote.style.display = "block"; return; }
+  emptyNote.style.display = "none";
 
-    if (snapshot.empty) {
-      emptyNote.dataset.shouldShow = "true";
-      if (showList) emptyNote.style.display = "block";
-      return;
-    }
-    emptyNote.dataset.shouldShow = "false";
-    emptyNote.style.display = "none";
+  historyDocs.forEach((d) => {
+    const dateStr = new Date(d.utcDate).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+    const bet = myBets[String(d.matchId)];
+    let mine;
+    if (!bet) mine = "Pas de pronostic";
+    else if (bet.resolved) mine = `Ton prono : ${bet.butHome}-${bet.butAway} → <span class="pts-badge ${bet.gain ? "" : "zero"}">+${bet.gain} pt${bet.gain > 1 ? "s" : ""}</span>`;
+    else mine = `Ton prono : ${bet.butHome}-${bet.butAway} → calcul en cours...`;
 
-    snapshot.forEach((docSnap) => {
-      const d = docSnap.data();
-      const dateStr = new Date(d.utcDate).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
-      const row = document.createElement("div");
-      row.className = "history-row";
-      row.innerHTML = `
+    const row = document.createElement("div");
+    row.className = "history-row";
+    row.innerHTML = `
+      <div class="history-top">
         <span>${escapeHtml(d.homeTeam)} — ${escapeHtml(d.awayTeam)} <span class="h-date">(${dateStr})</span></span>
         <span class="h-score">${d.homeScore}-${d.awayScore}</span>
-      `;
-      list.appendChild(row);
-    });
+      </div>
+      <div class="history-mine">${mine}</div>`;
+    list.appendChild(row);
   });
 }
 
 window.onload = function () {
   const saved = localStorage.getItem("footBetPseudo");
-  if (saved) {
-    document.getElementById("pseudo").value = saved;
-  }
+  if (saved) document.getElementById("pseudo").value = saved;
 };
 </script>
 </body>
