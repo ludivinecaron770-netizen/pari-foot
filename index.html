@@ -388,7 +388,10 @@ async function pickNextMatchday() {
     if (upcoming.length === 0) throw new Error("Aucun match à venir trouvé.");
 
     const md = upcoming[0].matchday;
-    const group = md != null ? upcoming.filter(m => m.matchday === md) : [upcoming[0]];
+    const firstDate = new Date(upcoming[0].utcDate);
+    const group = upcoming.filter(m =>
+      new Date(m.utcDate) - firstDate < 4 * 24 * 3600 * 1000
+    );
 
     const list = group.map(m => ({
       id: m.id,
