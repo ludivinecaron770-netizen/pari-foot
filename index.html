@@ -382,7 +382,7 @@ async function pickNextMatchday() {
 
     const currentIds = new Set(matches.map(m => m.id));
     const upcoming = (data.matches || [])
-      .filter(m => m.status !== "FINISHED" && !currentIds.has(m.id))
+      .filter(m => m.status !== "FINISHED" && m.status !== "POSTPONED" && m.status !== "CANCELLED" && !currentIds.has(m.id))
       .sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
 
     if (upcoming.length === 0) throw new Error("Aucun match à venir trouvé.");
